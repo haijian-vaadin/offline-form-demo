@@ -23,9 +23,8 @@ import Person from '../../generated/com/a/b/data/entity/Person';
 import { CSSModule } from '@vaadin/flow-frontend/css-utils';
 
 import styles from './master-detail-view.css';
-import { Binder, field } from '@vaadin/form';
+import { field, OfflineBinder } from '@vaadin/form';
 import PersonModel from '../../generated/com/a/b/data/entity/PersonModel';
-import { OfflineFormSubmitter } from '@vaadin/form/FormSubmitter';
 
 @customElement('master-detail-view')
 export class MasterDetailViewElement extends LitElement {
@@ -47,14 +46,19 @@ export class MasterDetailViewElement extends LitElement {
 
   private gridDataProvider = this.getGridData.bind(this);
 
-  private binder = new Binder(this, PersonModel, {submitter: new OfflineFormSubmitter("master-detail-view", PersonEndpoint.update, ()=>{
-    alert("You are offline, data is saved locally");
-  }, ()=>{
-    alert("You are backonline, data synced to backend successfully");
-  },
-  ()=>{
-    alert("You are backonline, data failed to sync to backend");
-  })});
+  private binder = new OfflineBinder(this, PersonModel, {
+      onSubmit: PersonEndpoint.update, 
+      onDataSavedLocally: ()=>{
+        alert("You are offline, data is saved locally");
+      }, 
+      onDataSyncSucess: ()=>{
+        alert("You are backonline, data synced to backend successfully");
+      },
+      onDataSyncFail: ()=>{
+        alert("You are backonline, data failed to sync to backend");
+      },
+      formElementName: 'master-detail-view'
+    });
 
   render() {
     return html`
@@ -117,7 +121,7 @@ export class MasterDetailViewElement extends LitElement {
   }
 
   // Wait until all elements in the template are ready to set their properties
-  async firstUpdated(changedProperties: any) {
+  async firstUpdated(changedProperties: any) {  
     super.firstUpdated(changedProperties);
 
     this.gridSize = await this.getGridDataSize();
